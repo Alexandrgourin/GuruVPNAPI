@@ -19,7 +19,7 @@ const app = fastify({
 
 // Регистрируем плагины
 app.register(cors, {
-  origin: config.cors.origins as string[],
+  origin: config.cors.origins,
   credentials: true
 });
 

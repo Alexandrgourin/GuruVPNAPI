@@ -10,7 +10,7 @@ export const config = {
     url: process.env.DATABASE_URL
   },
   cors: {
-    origins: ['http://localhost:5173'] // Добавьте другие origins при необходимости
+    origins: ['http://localhost:5173'] as string[] // Явно указываем тип как string[]
   },
   jwt: {
     secret: process.env.JWT_SECRET || 'default-secret-key'
@@ -31,7 +31,7 @@ const requiredEnvs = [
   'TELEGRAM_BOT_TOKEN',
   'YOOKASSA_SHOP_ID',
   'YOOKASSA_SECRET_KEY'
-];
+] as const;
 
 for (const env of requiredEnvs) {
   if (!process.env[env]) {
