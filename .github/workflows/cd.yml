@@ -80,62 +80,20 @@ jobs:
         run: pnpm build
 
       # Deploy to production if push to main branch
-      - name: CD
+      - name: Deploy to Production
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v3
-          
-          - uses: actions/setup-node@v3
-            with:
-              node-version: '18'
-              
-          - uses: pnpm/action-setup@v2
-            with:
-              version: 8
-              run_install: false
-              
-          - name: Get pnpm store directory
-            shell: bash
-            run: |
-              echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_ENV
-
-          - uses: actions/cache@v3
-            name: Setup pnpm cache
-            with:
-              path: ${{ env.STORE_PATH }}
-              key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-              restore-keys: |
-                ${{ runner.os }}-pnpm-store-
-          
-          - name: Copy files to server
-            uses: appleboy/scp-action@master
-            with:
-              host: ${{ secrets.PROD_HOST }}
-              username: ${{ secrets.PROD_USERNAME }}
-              key: ${{ secrets.PROD_SSH_KEY }}
-              source: "."
-              target: "~/guru-vpn-api"
-              
-          - name: Install dependencies and deploy
-            uses: appleboy/ssh-action@master
-            with:
-              host: ${{ secrets.PROD_HOST }}
-              username: ${{ secrets.PROD_USERNAME }}
-              key: ${{ secrets.PROD_SSH_KEY }}
-              script: |
-                cd ~/guru-vpn-api
-                curl -fsSL https://get.pnpm.io/install.sh | sh -
-                source ~/.bashrc
-                sudo npm install -g pm2
-                pnpm install
-                pnpm db:generate
-                pnpm build
-                pm2 delete guru-vpn-api || true
-                pm2 start ecosystem.config.js
-                pm2 save
-                sudo pm2 startup
-                sudo systemctl restart nginx
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            --exclude '.env' \
+            ./ ubuntu@app.gurupass.tech:~/guru-vpn-api/
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@app.gurupass.tech "cd ~/guru-vpn-api && pnpm install && pnpm db:generate && pm2 restart guru-vpn-api || pm2 start ecosystem.config.js"
 
       # Deploy to staging if push to dev branch
       - name: Deploy to Staging
