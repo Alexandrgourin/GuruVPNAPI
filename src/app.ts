@@ -26,6 +26,11 @@ export const createApp = async () => {
     { prefix: '/api/v1' },
   );
 
+  // Логируем все зарегистрированные маршруты
+  app.ready(() => {
+    logger.info('Registered routes:', app.printRoutes());
+  });
+
   // Обработка ошибок
   app.setErrorHandler((error, request, reply) => {
     logger.error('Error handling request:', error);
