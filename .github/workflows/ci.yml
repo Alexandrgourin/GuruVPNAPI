@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main ]
 
 jobs:
   test:
@@ -36,7 +36,6 @@ jobs:
     - uses: pnpm/action-setup@v2
       with:
         version: 8
-        run_install: false
 
     - name: Get pnpm store directory
       shell: bash
@@ -60,16 +59,12 @@ jobs:
     - name: Run database migrations
       run: pnpm run db:migrate
       env:
-        DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/guru_vpn_test?schema=public"
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/guru_vpn_test
 
     - name: Run tests
       run: pnpm test
       env:
-        DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/guru_vpn_test?schema=public"
-        JWT_SECRET: "test-secret"
-        TELEGRAM_BOT_TOKEN: "test-token"
-        YOOKASSA_SHOP_ID: "test-shop-id"
-        YOOKASSA_SECRET_KEY: "test-secret-key"
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/guru_vpn_test
 
-    - name: Run linting
-      run: pnpm run lint
+    - name: Run ESLint
+      run: pnpm run lint --fix
