@@ -17,7 +17,7 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
   // Маршрут для создания платежа
   fastify.route({
     method: 'POST',
-    url: '/api/v1/payments',
+    url: '/payments',
     schema: {
       body: {
         type: 'object',
