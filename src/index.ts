@@ -1,17 +1,31 @@
-import { app } from './app';
-import { config } from './config';
-import { logger } from './utils/logger';
+import fastify from 'fastify';
+import cors from '@fastify/cors';
+import { userRoutes } from './routes/user.routes';
+import { subscriptionRoutes } from './routes/subscription.routes';
 
+const server = fastify({
+  logger: true
+});
+
+// Регистрируем CORS
+server.register(cors, {
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
+  credentials: true,
+});
+
+// Регистрируем маршруты
+server.register(userRoutes, { prefix: '/api/v1' });
+server.register(subscriptionRoutes, { prefix: '/api/v1' });
+
+// Запускаем сервер
 const start = async () => {
   try {
-    await app.listen({
-      port: config.server.port,
-      host: config.server.host
-    });
-
-    logger.info(`Server is running on http://${config.server.host}:${config.server.port}`);
+    await server.listen({ port: 3000 });
+    console.log('Server is running on port 3000');
   } catch (err) {
-    logger.error('Error starting server:', err);
+    server.log.error(err);
     process.exit(1);
   }
 };

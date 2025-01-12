@@ -18,7 +18,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@fastify/cors": "^10.0.2",
+    "@a2seven/yoo-checkout": "^1.1.4",
+    "@fastify/cors": "^8.5.0",
     "@prisma/client": "^5.22.0",
     "dotenv": "^16.3.1",
     "fastify": "^4.25.2",

@@ -13,9 +13,9 @@ export function errorHandler(
 ) {
   request.log.error(error);
 
-  // Обработка ошибок FastifyError
-  if (error instanceof FastifyError) {
-    return reply.status(error.statusCode || 500).send({
+  // Обработка ошибок с статус кодом
+  if (error.statusCode) {
+    return reply.status(error.statusCode).send({
       success: false,
       message: error.message,
     });
