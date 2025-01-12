@@ -1,7 +1,7 @@
 import fastify from 'fastify';
 import cors from '@fastify/cors';
 import { subscriptionRoutes } from './routes/subscription.routes';
-import userRoutes from './routes/user.routes';
+import { userRoutes } from './routes/user.routes';
 import { logger } from './utils/logger';
 
 export const createApp = async () => {
