@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: guru_vpn_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate Prisma Client
+      run: npm run db:generate
+
+    - name: Run database migrations
+      run: npm run db:migrate
+      env:
+        DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/guru_vpn_test?schema=public"
+
+    - name: Run tests
+      run: npm test
+      env:
+        DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/guru_vpn_test?schema=public"
+        JWT_SECRET: "test-secret"
+        TELEGRAM_BOT_TOKEN: "test-token"
+        YOOKASSA_SHOP_ID: "test-shop-id"
+        YOOKASSA_SECRET_KEY: "test-secret-key"
+
+    - name: Run linting
+      run: npm run lint
