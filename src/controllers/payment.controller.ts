@@ -24,7 +24,7 @@ export const createPayment = async (
   }>,
   reply: FastifyReply,
 ) => {
-  logger.info('Received payment request:', request.body);
+  logger.info('Received payment request:', { body: request.body, url: request.url, method: request.method });
 
   try {
     const { planId, deviceCount, amount, userId } = createPaymentSchema.parse(request.body);
@@ -37,7 +37,7 @@ export const createPayment = async (
     });
 
     if (!user) {
-      logger.error('User not found:', userId);
+      logger.error('User not found:', { userId, body: request.body });
       return reply.status(404).send({
         error: 'User not found',
         details: 'The specified user does not exist',
