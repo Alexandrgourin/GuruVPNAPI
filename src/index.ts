@@ -17,8 +17,8 @@ server.register(cors, {
 });
 
 // Регистрируем маршруты
-server.register(userRoutes, { prefix: '/api/v1' });
-server.register(subscriptionRoutes, { prefix: '/api/v1' });
+server.register(userRoutes);
+server.register(subscriptionRoutes);
 
 // Health check endpoint
 server.get('/health', async (request, reply) => {
