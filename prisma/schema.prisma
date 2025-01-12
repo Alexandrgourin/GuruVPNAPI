@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  id          String        @id @default(uuid())
+  userId      BigInt
+  planId      String
+  deviceCount Int
+  amount      Int
+  status      OrderStatus   @default(PENDING)
+  paymentId   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  subscription Subscription?
+
+  @@map("orders")
+}
+
+model Subscription {
+  id          String            @id @default(uuid())
+  userId      BigInt
+  orderId     String            @unique
+  order       Order             @relation(fields: [orderId], references: [id])
+  status      SubscriptionStatus
+  startsAt    DateTime
+  expiresAt   DateTime
+  createdAt   DateTime          @default(now())
+  devices     Device[]
+
+  @@map("subscriptions")
+}
+
+model Device {
+  id             String       @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  name           String?
+  lastActive     DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@map("devices")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+}
