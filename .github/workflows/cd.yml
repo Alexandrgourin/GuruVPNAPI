@@ -1,41 +1,112 @@
-name: CD
+name: Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: guru_vpn_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
 
-    - name: Generate Prisma Client
-      run: npm run db:generate
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-    - name: Build
-      run: npm run build
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
-    - name: Deploy to Production
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          cd /var/www/guru-vpn-api
-          git pull origin main
-          npm ci
-          npm run db:generate
-          npm run build
-          pm2 reload guru-vpn-api
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
+      - name: Run database migrations
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/guru_vpn_test?schema=public"
+
+      - name: Run tests
+        run: pnpm test
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/guru_vpn_test?schema=public"
+          JWT_SECRET: "test-secret"
+          TELEGRAM_BOT_TOKEN: "test-token"
+          YOOKASSA_SHOP_ID: "test-shop-id"
+          YOOKASSA_SECRET_KEY: "test-secret-key"
+
+      - name: Build
+        run: pnpm build
+
+      # Deploy to production if push to main branch
+      - name: Deploy to Production
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            --exclude '.env' \
+            ./ ubuntu@app.gurupass.tech:~/guru-vpn-api/
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@app.gurupass.tech "cd ~/guru-vpn-api && pnpm install && pnpm db:generate && pm2 restart guru-vpn-api"
+
+      # Deploy to staging if push to dev branch
+      - name: Deploy to Staging
+        if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            --exclude '.env' \
+            ./ ubuntu@app.gurupass.tech:~/guru-vpn-api-staging/
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@app.gurupass.tech "cd ~/guru-vpn-api-staging && pnpm install && pnpm db:generate && pm2 restart guru-vpn-api-staging || pm2 start ecosystem.staging.config.js"
