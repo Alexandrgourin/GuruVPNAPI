@@ -1,17 +1,25 @@
-import fastify from 'fastify';
+import fastify, { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import { config } from './config';
 import { logger } from './utils/logger';
 import { errorHandler } from './middlewares/errorHandler';
-import { subscriptionRoutes } from './routes/subscription.routes';
+import subscriptionRoutes from './routes/subscription.routes';
 
 const app = fastify({
-  logger
+  logger: {
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        translateTime: 'HH:MM:ss Z',
+        ignore: 'pid,hostname',
+      },
+    },
+  },
 });
 
 // Регистрируем плагины
 app.register(cors, {
-  origin: config.cors.origins,
+  origin: config.cors.origins as string[],
   credentials: true
 });
 
@@ -19,6 +27,12 @@ app.register(cors, {
 app.register(subscriptionRoutes, { prefix: '/api/v1/subscriptions' });
 
 // Обработка ошибок
-app.setErrorHandler(errorHandler);
+app.setErrorHandler(function (
+  error: FastifyError,
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
+  return errorHandler(error, request, reply);
+});
 
 export { app };

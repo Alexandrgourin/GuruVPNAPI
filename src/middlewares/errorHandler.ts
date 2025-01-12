@@ -14,7 +14,7 @@ export class AppError extends Error {
 }
 
 export const errorHandler = (
-  error: FastifyError,
+  error: FastifyError | Error,
   request: FastifyRequest,
   reply: FastifyReply
 ) => {
