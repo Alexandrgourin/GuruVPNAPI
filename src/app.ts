@@ -2,6 +2,7 @@ import fastify from 'fastify';
 import cors from '@fastify/cors';
 import { subscriptionRoutes } from './routes/subscription.routes';
 import { userRoutes } from './routes/user.routes';
+import { createPayment } from './controllers/payment.controller';
 import { logger } from './utils/logger';
 
 export const createApp = async () => {
@@ -20,6 +21,22 @@ export const createApp = async () => {
   // Регистрируем маршруты с префиксом /api/v1
   app.register(subscriptionRoutes, { prefix: '/api/v1' });
   app.register(userRoutes, { prefix: '/api/v1' });
+
+  // Маршрут для создания платежа
+  app.post('/api/v1/payments', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['planId', 'deviceCount', 'amount', 'userId'],
+        properties: {
+          planId: { type: 'string' },
+          deviceCount: { type: 'number', minimum: 1 },
+          amount: { type: 'number', minimum: 0 },
+          userId: { type: 'string' },
+        },
+      },
+    },
+  }, createPayment);
 
   // Логируем все зарегистрированные маршруты
   app.ready(() => {
