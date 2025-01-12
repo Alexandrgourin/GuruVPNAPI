@@ -30,7 +30,9 @@ const parseConfig = () => {
     nodeEnv: process.env.NODE_ENV,
     port: process.env.PORT,
     cors: {
-      origins: process.env.CORS_ORIGINS ? JSON.parse(process.env.CORS_ORIGINS) : ['http://localhost:5173', 'http://192.168.0.75:5173'],
+      origins: process.env.CORS_ORIGINS
+        ? JSON.parse(process.env.CORS_ORIGINS)
+        : ['http://localhost:5173', 'http://192.168.0.75:5173'],
     },
     database: {
       url: process.env.DATABASE_URL,
@@ -57,7 +59,7 @@ const requiredEnvs = [
   'JWT_SECRET',
   'TELEGRAM_BOT_TOKEN',
   'YOOKASSA_SHOP_ID',
-  'YOOKASSA_SECRET_KEY'
+  'YOOKASSA_SECRET_KEY',
 ] as const;
 
 for (const env of requiredEnvs) {

@@ -6,11 +6,7 @@ interface CustomError extends FastifyError {
   statusCode?: number;
 }
 
-export function errorHandler(
-  error: CustomError,
-  request: FastifyRequest,
-  reply: FastifyReply,
-) {
+export function errorHandler(error: CustomError, request: FastifyRequest, reply: FastifyReply) {
   request.log.error(error);
 
   // Обработка ошибок с статус кодом

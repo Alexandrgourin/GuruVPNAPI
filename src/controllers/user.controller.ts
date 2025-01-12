@@ -14,7 +14,7 @@ export const createUser = async (
   request: FastifyRequest<{
     Body: CreateUserBody;
   }>,
-  reply: FastifyReply
+  reply: FastifyReply,
 ) => {
   const { telegramId, username } = request.body;
 
@@ -22,7 +22,7 @@ export const createUser = async (
     const telegramIdBigInt = BigInt(telegramId);
 
     const existingUser = await prisma.user.findUnique({
-      where: { telegramId: telegramIdBigInt }
+      where: { telegramId: telegramIdBigInt },
     });
 
     if (existingUser) {
@@ -33,14 +33,14 @@ export const createUser = async (
       data: {
         telegramId: telegramIdBigInt,
         username: username || null,
-      }
+      },
     });
 
     return reply.code(201).send(formatUser(user));
   } catch (error) {
     console.error('Failed to create user:', error);
     return reply.code(500).send({
-      message: 'Internal server error'
+      message: 'Internal server error',
     });
   }
 };

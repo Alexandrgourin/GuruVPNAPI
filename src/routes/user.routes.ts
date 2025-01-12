@@ -11,8 +11,8 @@ export async function userRoutes(fastify: FastifyInstance) {
         required: ['telegramId'],
         properties: {
           telegramId: { type: 'string' },
-          username: { type: 'string' }
-        }
+          username: { type: 'string' },
+        },
       },
       response: {
         200: {
@@ -22,8 +22,8 @@ export async function userRoutes(fastify: FastifyInstance) {
             telegramId: { type: 'string' },
             username: { type: 'string', nullable: true },
             createdAt: { type: 'string', format: 'date-time' },
-            updatedAt: { type: 'string', format: 'date-time' }
-          }
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
         },
         201: {
           type: 'object',
@@ -32,12 +32,12 @@ export async function userRoutes(fastify: FastifyInstance) {
             telegramId: { type: 'string' },
             username: { type: 'string', nullable: true },
             createdAt: { type: 'string', format: 'date-time' },
-            updatedAt: { type: 'string', format: 'date-time' }
-          }
-        }
-      }
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+      },
     },
-    handler: createUser
+    handler: createUser,
   });
 
   // Маршрут для получения профиля пользователя
@@ -47,8 +47,8 @@ export async function userRoutes(fastify: FastifyInstance) {
         type: 'object',
         required: ['userId'],
         properties: {
-          userId: { type: 'string' }
-        }
+          userId: { type: 'string' },
+        },
       },
       response: {
         200: {
@@ -62,8 +62,8 @@ export async function userRoutes(fastify: FastifyInstance) {
                 deviceCount: { type: 'integer' },
                 status: { type: 'string', enum: ['ACTIVE', 'EXPIRED', 'PENDING'] },
                 startDate: { type: 'string', format: 'date-time' },
-                endDate: { type: 'string', format: 'date-time' }
-              }
+                endDate: { type: 'string', format: 'date-time' },
+              },
             },
             payments: {
               type: 'array',
@@ -75,14 +75,14 @@ export async function userRoutes(fastify: FastifyInstance) {
                   deviceCount: { type: 'integer' },
                   amount: { type: 'number' },
                   status: { type: 'string', enum: ['PENDING', 'COMPLETED', 'CANCELLED'] },
-                  createdAt: { type: 'string', format: 'date-time' }
-                }
-              }
-            }
-          }
-        }
-      }
+                  createdAt: { type: 'string', format: 'date-time' },
+                },
+              },
+            },
+          },
+        },
+      },
     },
-    handler: profileController.getUserProfile
+    handler: profileController.getUserProfile,
   });
 }

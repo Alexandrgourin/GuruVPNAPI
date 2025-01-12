@@ -86,12 +86,20 @@ jobs:
         mkdir -p ~/.ssh
         echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
+        # Копируем только файлы приложения, исключая конфигурационные файлы и секреты
         rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
           --exclude 'node_modules' \
           --exclude '.git' \
-          --exclude '.env' \
+          --exclude '.env*' \
+          --exclude 'nginx.conf' \
+          --exclude 'nginx.staging.conf' \
           ./ ubuntu@app.gurupass.tech:~/guru-vpn-api/
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@app.gurupass.tech "cd ~/guru-vpn-api && pnpm install && pnpm db:generate && pm2 restart guru-vpn-api || pm2 start ecosystem.config.js"
+        # Деплоим приложение
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@app.gurupass.tech "cd ~/guru-vpn-api && \
+          pnpm install && \
+          pnpm db:generate && \
+          pnpm db:deploy && \
+          pm2 restart guru-vpn-api || pm2 start ecosystem.config.js"
 
     # Deploy to staging if push to dev branch
     - name: Deploy to Staging
@@ -105,6 +113,8 @@ jobs:
         rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
           --exclude 'node_modules' \
           --exclude '.git' \
-          --exclude '.env' \
+          --exclude '.env*' \
+          --exclude 'nginx.conf' \
+          --exclude 'nginx.staging.conf' \
           ./ ubuntu@app.gurupass.tech:~/guru-vpn-api-staging/
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@app.gurupass.tech "cd ~/guru-vpn-api-staging && pnpm install && pnpm db:generate && pm2 restart guru-vpn-api-staging || pm2 start ecosystem.staging.config.js"

@@ -18,10 +18,13 @@ export const createApp = async () => {
   });
 
   // Регистрируем маршруты с префиксом /api/v1
-  await app.register(async (fastify) => {
-    await fastify.register(subscriptionRoutes);
-    await fastify.register(userRoutes);
-  }, { prefix: '/api/v1' });
+  await app.register(
+    async (fastify) => {
+      await fastify.register(subscriptionRoutes);
+      await fastify.register(userRoutes);
+    },
+    { prefix: '/api/v1' },
+  );
 
   // Обработка ошибок
   app.setErrorHandler((error, request, reply) => {

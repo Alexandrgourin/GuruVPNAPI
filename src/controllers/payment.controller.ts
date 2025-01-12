@@ -25,22 +25,22 @@ export const createPayment = async (
   reply: FastifyReply,
 ) => {
   logger.info('Received payment request:', request.body);
-  
+
   try {
     const { planId, deviceCount, amount, userId } = createPaymentSchema.parse(request.body);
-    
+
     logger.info('Creating payment with data:', { planId, deviceCount, amount, userId });
 
     // Проверяем существование пользователя
     const user = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     if (!user) {
       logger.error('User not found:', userId);
       return reply.status(404).send({
         error: 'User not found',
-        details: 'The specified user does not exist'
+        details: 'The specified user does not exist',
       });
     }
 
@@ -48,19 +48,19 @@ export const createPayment = async (
     const yooKassaPayment = await checkout.createPayment({
       amount: {
         value: amount.toFixed(2),
-        currency: 'RUB'
+        currency: 'RUB',
       },
       capture: true,
       confirmation: {
         type: 'redirect',
-        return_url: config.yookassa.returnUrl
+        return_url: config.yookassa.returnUrl,
       },
       description: `Подписка GuruVPN: ${planId}, ${deviceCount} устройств`,
       metadata: {
         planId,
         deviceCount,
-        userId
-      }
+        userId,
+      },
     });
 
     logger.info('YooKassa payment created:', yooKassaPayment);
@@ -76,7 +76,7 @@ export const createPayment = async (
       created_at: yooKassaPayment.created_at,
       description: yooKassaPayment.description,
       plan_id: planId,
-      device_count: deviceCount
+      device_count: deviceCount,
     };
 
     // Сохраняем платеж в базу данных
@@ -89,21 +89,21 @@ export const createPayment = async (
         amount: Number(amount),
         status: 'pending',
         yookassaPaymentId: yooKassaPayment.id,
-        metadata: paymentMetadata
-      }
+        metadata: paymentMetadata,
+      },
     });
 
     logger.info('Payment saved to database:', payment);
 
     return reply.send({
       id: payment.id,
-      confirmation_url: yooKassaPayment.confirmation.confirmation_url
+      confirmation_url: yooKassaPayment.confirmation.confirmation_url,
     });
   } catch (error) {
     logger.error('Error creating payment:', error);
     return reply.status(400).send({
       error: 'Failed to create payment',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 };

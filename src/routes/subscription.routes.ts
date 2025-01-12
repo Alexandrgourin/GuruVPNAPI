@@ -26,10 +26,10 @@ export async function subscriptionRoutes(fastify: FastifyInstance) {
           planId: { type: 'string' },
           deviceCount: { type: 'number', minimum: 1 },
           amount: { type: 'number', minimum: 0 },
-          userId: { type: 'string' }
-        }
-      }
+          userId: { type: 'string' },
+        },
+      },
     },
-    handler: createPayment
+    handler: createPayment,
   });
 }

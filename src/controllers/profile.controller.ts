@@ -30,19 +30,19 @@ export const profileController = {
     request: FastifyRequest<{
       Params: GetUserProfileParams;
     }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) {
     const { userId } = request.params;
 
     try {
       // Получаем пользователя
       const user = await prisma.user.findUnique({
-        where: { id: userId }
+        where: { id: userId },
       });
 
       if (!user) {
         return reply.code(404).send({
-          message: 'User not found'
+          message: 'User not found',
         });
       }
 
@@ -52,54 +52,56 @@ export const profileController = {
           userId: user.telegramId,
           status: SubscriptionStatus.ACTIVE,
           expiresAt: {
-            gt: new Date()
-          }
+            gt: new Date(),
+          },
         },
         include: {
           order: true,
-          devices: true
+          devices: true,
         },
         orderBy: {
-          expiresAt: 'desc'
-        }
+          expiresAt: 'desc',
+        },
       });
 
       // Получаем историю платежей
       const payments = await prisma.payment.findMany({
         where: {
-          userId
+          userId,
         },
         orderBy: {
-          createdAt: 'desc'
-        }
+          createdAt: 'desc',
+        },
       });
 
       // Форматируем ответ
       const response: ProfileResponse = {
-        subscription: subscription ? {
-          id: subscription.id,
-          status: subscription.status,
-          startsAt: subscription.startsAt.toISOString(),
-          expiresAt: subscription.expiresAt.toISOString(),
-          deviceCount: subscription.devices.length,
-          planId: subscription.order.planId
-        } : null,
-        payments: payments.map(payment => ({
+        subscription: subscription
+          ? {
+              id: subscription.id,
+              status: subscription.status,
+              startsAt: subscription.startsAt.toISOString(),
+              expiresAt: subscription.expiresAt.toISOString(),
+              deviceCount: subscription.devices.length,
+              planId: subscription.order.planId,
+            }
+          : null,
+        payments: payments.map((payment) => ({
           id: payment.id,
           planId: payment.planId,
           deviceCount: payment.deviceCount,
           amount: Number(payment.amount),
           status: payment.status,
-          createdAt: payment.createdAt.toISOString()
-        }))
+          createdAt: payment.createdAt.toISOString(),
+        })),
       };
 
       return reply.send(response);
     } catch (error) {
       console.error('Failed to get user profile:', error);
       return reply.code(500).send({
-        message: 'Internal server error'
+        message: 'Internal server error',
       });
     }
-  }
+  },
 };
